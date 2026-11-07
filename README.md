@@ -79,7 +79,7 @@ project is new to PyPI.
 
 Make sure `pyproject.toml` and `src/freecampustools/__init__.py` both have the
 intended version and that the commit has passed CI on upstream `main`. Create a
-matching `vMAJOR.MINOR.PATCH` tag on that commit and push it to the upstream
+matching `MAJOR.MINOR.PATCH` tag on that commit and push it to the upstream
 repository. The workflow builds and checks the wheel and source distribution,
 publishes them to PyPI, and attaches both files to the GitHub release with
 generated notes.

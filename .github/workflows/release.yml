@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
 
 permissions: {}
 
@@ -49,8 +49,8 @@ jobs:
       - name: Verify the tag matches the package version
         run: |
           version=$(poetry version --short)
-          if [[ "$GITHUB_REF_NAME" != "v$version" ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME must match package version v$version."
+          if [[ "$GITHUB_REF_NAME" != "$version" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME must match package version $version."
             exit 1
           fi
 
