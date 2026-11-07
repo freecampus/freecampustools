@@ -127,8 +127,8 @@ class Quiz:
         Parameters
         ----------
         css_class : str, optional
-            Script element class. The default matches the FreeCampus Python
-            Quarto quiz include.
+            Script element class. The default works with the FreeCampus Quiz
+            Quarto extension and the original FreeCampus Python quiz include.
         indent : int or None, optional
             Number of spaces to indent the JSON. Use None for compact output.
 
