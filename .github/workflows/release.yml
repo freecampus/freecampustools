@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Check and build distributions
+    if: github.repository == 'freecampus/freecampustools' && !github.event.deleted
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    outputs:
+      artifact: ${{ steps.upload.outputs.artifact-id }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      POETRY_INSTALLER_PARALLEL: "false"
+      POETRY_VIRTUALENVS_CREATE: "false"
+      VIRTUALENV_ACTIVATORS: "bash,python"
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify the tagged commit is on main
+        run: git merge-base --is-ancestor HEAD origin/main
+
+      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3
+        with:
+          miniforge-version: latest
+          environment-file: conda.yaml
+          channels: conda-forge,nodefaults
+          activate-environment: freecampustools
+          conda-solver: libmamba
+          python-version: "3.12"
+
+      - name: Verify the tag matches the package version
+        run: |
+          version=$(poetry version --short)
+          if [[ "$GITHUB_REF_NAME" != "$version" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME must match package version $version."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          poetry check --lock
+          poetry install --extras notebook
+
+      - name: Run checks and build distributions
+        run: makim all.ci
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        id: upload
+        with:
+          name: distributions-${{ github.run_attempt }}
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact }}
+          path: dist/
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        with:
+          skip-existing: ${{ github.run_attempt > 1 }}
+
+  release:
+    name: Create GitHub release
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact }}
+          path: dist/
+          merge-multiple: true
+
+      - name: Publish release notes and distributions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

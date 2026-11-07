@@ -70,4 +70,23 @@ POETRY_VIRTUALENVS_CREATE=false poetry install --extras notebook
 makim all.ci
 ```
 
+## Release
+
+Before the first release, configure a [PyPI Trusted Publisher] for the
+`freecampustools` project with owner `freecampus`, repository `freecampustools`,
+workflow `release.yml`, and environment `pypi`. Use a pending publisher if the
+project is new to PyPI.
+
+Make sure `pyproject.toml` and `src/freecampustools/__init__.py` both have the
+intended version and that the commit has passed CI on upstream `main`. Create a
+matching `MAJOR.MINOR.PATCH` tag on that commit and push it to the upstream
+repository. The workflow builds and checks the wheel and source distribution,
+publishes them to PyPI, and attaches both files to the GitHub release with
+generated notes.
+
+If a release fails, fix the cause and rerun the failed jobs from the same
+workflow run. Keep the original tag in place.
+
+[PyPI Trusted Publisher]: https://docs.pypi.org/trusted-publishers/
+
 Licensed under the [BSD 3-Clause License](LICENSE).
