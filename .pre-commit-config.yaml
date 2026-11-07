@@ -21,7 +21,7 @@ repos:
         name: prettier
         entry: npx --yes prettier@3.0.2 --write
         language: system
-        types_or: [json, markdown, yaml]
+        types_or: [json, markdown, yaml, javascript]
 
       - id: ruff-format
         name: ruff-format

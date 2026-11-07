@@ -1,8 +1,8 @@
 # FreeCampus Tools
 
-A Python library for tools shared across [FreeCampus](https://freecampus.org)
-courses. It currently provides multiple-choice quizzes, JSON export for web
-renderers, and interactive widgets for Jupyter and Colab.
+FreeCampus Tools provides shared multiple-choice quizzes for
+[FreeCampus](https://freecampus.org) courses, with a Quarto extension for course
+websites and a Python library for Jupyter and Colab.
 
 ## Install from GitHub
 
@@ -52,14 +52,60 @@ display(show_quiz(quiz))
 ```
 
 For a plain-text list of prompts, use `quiz_summary(quiz)` from
-`freecampustools.widgets`. For a web renderer, use `quiz.to_json()` or print
-`quiz.to_json_script()` in a Quarto Python cell with `#| output: asis` and
-`#| echo: false`. The script contains quiz data, including answers, for
-self-checks. Pair it with a renderer such as the
-[FreeCampus Python Quarto include](https://github.com/freecampus/python/blob/24de39c5b5e8801cdd7e95061f3cedce25d81f31/docs/_includes/ojs-quiz.qmd).
+`freecampustools.widgets`.
 
-The quiz models and notebook renderer originated in
-[FreeCampus Python](https://github.com/freecampus/python/tree/24de39c5b5e8801cdd7e95061f3cedce25d81f31/src/fcpython).
+## Use quizzes in Quarto
+
+From the directory containing your course's `_quarto.yml`, install the extension
+with Quarto 1.9.38 or later.
+
+```bash
+quarto add freecampus/freecampustools
+```
+
+Commit the installed `_extensions/freecampus/quiz/` directory with your course.
+To install a specific release that includes the extension, append `@` followed
+by the release tag to the repository name. Add the filter to `_quarto.yml`.
+
+```yaml
+filters:
+  - freecampus/quiz
+```
+
+In a `.qmd` lesson, put a quiz wherever the learner should see it.
+
+````markdown
+```{.freecampus-quiz}
+{
+  "id": "map-scale",
+  "title": "Reading a map scale",
+  "questions": [
+    {
+      "id": "distance",
+      "prompt": "On this map, 1 cm represents 2 km. What does 3 cm represent?",
+      "options": ["2 km", "5 km", "6 km"],
+      "answer_index": 2,
+      "explanation": "Multiply the 3 cm on the map by 2 km per centimeter."
+    }
+  ]
+}
+```
+````
+
+`answer_index` counts from zero. Quarto bundles the renderer's JavaScript and
+CSS on pages with quizzes. Formats such as PDF and EPUB render fenced quizzes as
+a list of questions and options. HTML quizzes are for self-checks. The quiz
+data, including answers, is visible in the page source.
+
+The extension also reads the existing `fcpython-ojs-quiz-config` JSON script
+blocks. When migrating an existing course, keep those blocks and remove the
+matching `ojs-quiz.qmd` includes to avoid rendering each quiz twice. Keep the
+existing block format while any custom PDF or notebook exporters depend on it.
+To generate a quiz from Python, print `quiz.to_json_script()` in a Quarto Python
+cell with `#| output: asis` and `#| echo: false`.
+
+The quiz models, notebook renderer, and web renderer originated in
+[FreeCampus Python](https://github.com/freecampus/python/tree/24de39c5b5e8801cdd7e95061f3cedce25d81f31).
 
 ## Develop
 
@@ -69,6 +115,9 @@ conda activate freecampustools
 POETRY_VIRTUALENVS_CREATE=false poetry install --extras notebook
 makim all.ci
 ```
+
+With Quarto on `PATH`, the tests also check extension installation and
+rendering.
 
 ## Release
 
