@@ -1,0 +1,29 @@
+groups:
+  all:
+    tasks:
+      ci:
+        help: Run lint, tests, and package build
+        hooks:
+          pre-run:
+            - task: tests.linter
+            - task: tests.unit
+            - task: package.build
+
+  tests:
+    tasks:
+      linter:
+        help: Run pre-commit checks on all tracked files
+        backend: bash
+        run: pre-commit run --all-files --show-diff-on-failure
+
+      unit:
+        help: Run the package tests
+        backend: bash
+        run: pytest
+
+  package:
+    tasks:
+      build:
+        help: Build the wheel and source distribution with Poetry
+        backend: bash
+        run: poetry build
